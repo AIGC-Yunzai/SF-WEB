@@ -397,7 +397,18 @@
             color: white;
         }
 
-        .mode-toggle:not(.ss-mode) {
+        .mode-toggle.gg-mode {
+            background: white;
+            color: #ff69b4;
+            border: 2px solid #ff69b4;
+        }
+
+        .mode-toggle.dd-mode {
+            background: linear-gradient(135deg, #90caf9, #2196f3);
+            color: white;
+        }
+
+        .mode-toggle:not(.ss-mode):not(.gg-mode):not(.dd-mode) {
             background: white;
             box-shadow: 0 2px 8px rgba(255, 182, 193, 0.15);
         }
@@ -1082,7 +1093,9 @@
                             <li>在设置中输入您的QQ号和BOTQQ号,用于获取头像以及历史对话</li>
                             <li>在设置中输入访问密码,用于WebSocket服务的访问，如果sf插件的锅巴里没有相关设置，请更新sf插件</li>
                             <li>点击连接按钮建立WebSocket连接</li>
-                            <li>选择对话模式(SS/GG)</li>
+                            <li>选择对话模式(SS/GG/DD)</li>
+                            <li>DD模式下，用sf绘图和MJ绘图的指令会保存绘图历史记录</li>
+                            <li>所有模式都支持sf绘画和对话，以及MJ绘画的指令</li>
                             <li>开始对话！</li>
                         </ol>
                     </div>
@@ -1136,9 +1149,25 @@
         modeToggle.classList.add('ss-mode');
 
         modeToggle.addEventListener('click', () => {
-            currentMode = currentMode === 'ss' ? 'gg' : 'ss';
+            // 循环切换模式: ss -> gg -> dd -> ss
+            switch(currentMode) {
+                case 'ss':
+                    currentMode = 'gg';
+                    break;
+                case 'gg': 
+                    currentMode = 'dd';
+                    break;
+                case 'dd':
+                    currentMode = 'ss';
+                    break;
+            }
             modeToggle.textContent = currentMode.toUpperCase();
-            modeToggle.classList.toggle('ss-mode');
+            
+            // 移除所有模式相关的class
+            modeToggle.classList.remove('ss-mode', 'gg-mode', 'dd-mode');
+            // 添加当前模式的class
+            modeToggle.classList.add(`${currentMode}-mode`);
+            
             // 保存模式设置
             saveSettings();
 
