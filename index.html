@@ -1043,6 +1043,10 @@
                     <label for="bot-qq">BOTQQ:</label>
                     <input type="text" id="bot-qq" placeholder="输入BOTQQ号">
                 </div>
+                <div class="settings-item">
+                    <label for="ws-password">访问密码:</label>
+                    <input type="password" id="ws-password" placeholder="请输入访问密码">
+                </div>
                 <button id="ws-connect" class="settings-button">连接</button>
                 <div id="ws-status" class="settings-status"></div>
             </div>
@@ -1076,6 +1080,7 @@
                         <ol>
                             <li>在设置中输入云崽服务器的IP和端口</li>
                             <li>在设置中输入您的QQ号和BOTQQ号,用于获取头像以及历史对话</li>
+                            <li>在设置中输入访问密码,用于WebSocket服务的访问，如果sf插件的锅巴里没有相关设置，请更新sf插件</li>
                             <li>点击连接按钮建立WebSocket连接</li>
                             <li>选择对话模式(SS/GG)</li>
                             <li>开始对话！</li>
@@ -1309,6 +1314,9 @@
         let autoReconnectTimer = null;
         const RECONNECT_INTERVAL = 5000; // 5秒重连间隔
         
+        // 添加密码验证相关代码
+        let wsAuthenticated = false;
+        
         // 保存设置到本地存储
         function saveSettings() {
             const settings = {
@@ -1317,6 +1325,7 @@
                 mode: currentMode,
                 userQQ: document.getElementById('user-qq').value.trim(),
                 botQQ: document.getElementById('bot-qq').value.trim(),
+                wsPassword: document.getElementById('ws-password').value.trim(),
                 lastUpdate: new Date().getTime()
             };
             localStorage.setItem('sf_plugin_settings', JSON.stringify(settings));
@@ -1331,6 +1340,7 @@
                     document.getElementById('ws-port').value = settings.port || '';
                     document.getElementById('user-qq').value = settings.userQQ || '';
                     document.getElementById('bot-qq').value = settings.botQQ || '';
+                    document.getElementById('ws-password').value = settings.wsPassword || '';
                     
                     if (settings.mode) {
                         currentMode = settings.mode;
@@ -1535,6 +1545,7 @@
         document.getElementById('ws-port').addEventListener('change', saveSettings);
         document.getElementById('user-qq').addEventListener('change', saveSettings);
         document.getElementById('bot-qq').addEventListener('change', saveSettings);
+        document.getElementById('ws-password').addEventListener('change', saveSettings);
 
         // 关闭按钮事件
         document.getElementById('close-settings').addEventListener('click', () => {
@@ -1601,6 +1612,13 @@
                     }
                     startAutoReconnect();
 
+                    // 发送密码验证
+                    const password = document.getElementById('ws-password').value.trim();
+                    wsConnection.send(JSON.stringify({
+                        type: 'auth',
+                        password: password
+                    }));
+
                     // 连接成功后请求历史记录
                     const userQQ = document.getElementById('user-qq').value.trim() || 'web_user';
                     console.log('[sf插件] 请求加载历史记录:', userQQ, currentMode);
@@ -1635,8 +1653,25 @@
                 wsConnection.onmessage = (event) => {
                     try {
                         const msgObj = JSON.parse(event.data);
-                        console.log('[sf插件] 收到服务器消息:', msgObj);
+                        if (msgObj.type === 'auth') {
+                            if (msgObj.success) {
+                                wsAuthenticated = true;
+                                document.getElementById('ws-status').textContent = '已连接';
+                                document.getElementById('ws-status').style.color = '#4CAF50';
+                                showToast('连接成功！');
+                                settingsModal.classList.remove('active');
+                                modalOverlay.classList.remove('active');
+                                saveSettings();
+                            } else {
+                                wsAuthenticated = false;
+                                document.getElementById('ws-status').textContent = '密码错误';
+                                document.getElementById('ws-status').style.color = '#f44336';
+                                showToast('密码错误');
+                            }
+                            return;
+                        }
                         
+                        // 处理其他类型的消息
                         if (msgObj.type === 'error') {
                             console.error('[sf插件] 服务器错误:', msgObj.content);
                             showToast('服务器错误: ' + msgObj.content);
