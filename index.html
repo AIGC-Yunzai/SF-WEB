@@ -979,6 +979,84 @@
             font-size: 14px;
         }
 
+        /* 添加头像开关样式 */
+        .avatar-toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #fff5f7;
+            border-radius: 8px;
+            margin: 10px;
+        }
+
+        .avatar-toggle-container span {
+            color: #666;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #ff69b4;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* 添加无头像时的消息样式 */
+        .no-avatar .message {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .no-avatar .avatar {
+            display: none;
+        }
+
+        .no-avatar .message.left .message-content {
+            margin-left: -20px;
+        }
+
+        .no-avatar .message.right .message-content {
+            margin-right: -20px;
+        }
+
         /* 添加关闭按钮样式 */
         .close-button {
             position: absolute;
@@ -1071,6 +1149,13 @@
                         <svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path></svg>
                         <span>清空页面</span>
                     </button>
+                </div>
+                <div class="avatar-toggle-container">
+                    <span>显示头像</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="avatar-toggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
             </div>
             <div class="settings-tab" id="about-tab">
@@ -1355,9 +1440,13 @@
                 userQQ: document.getElementById('user-qq').value.trim(),
                 botQQ: document.getElementById('bot-qq').value.trim(),
                 wsPassword: document.getElementById('ws-password').value.trim(),
+                showAvatar: document.getElementById('avatar-toggle').checked,
                 lastUpdate: new Date().getTime()
             };
             localStorage.setItem('sf_plugin_settings', JSON.stringify(settings));
+            
+            // 更新头像显示状态
+            document.querySelector('.chat-container').classList.toggle('no-avatar', !settings.showAvatar);
         }
 
         // 从本地存储加载设置
@@ -1370,6 +1459,13 @@
                     document.getElementById('user-qq').value = settings.userQQ || '';
                     document.getElementById('bot-qq').value = settings.botQQ || '';
                     document.getElementById('ws-password').value = settings.wsPassword || '';
+                    
+                    // 设置头像开关状态
+                    const avatarToggle = document.getElementById('avatar-toggle');
+                    if (avatarToggle) {
+                        avatarToggle.checked = settings.showAvatar !== false;
+                        document.querySelector('.chat-container').classList.toggle('no-avatar', !settings.showAvatar);
+                    }
                     
                     if (settings.mode) {
                         currentMode = settings.mode;
@@ -1753,6 +1849,11 @@
                     });
             });
         }
+
+        // 添加头像开关事件监听
+        document.getElementById('avatar-toggle').addEventListener('change', function() {
+            saveSettings();
+        });
     </script>
 </body>
 
