@@ -1037,7 +1037,7 @@
             <div class="settings-tab active" id="connection-tab">
                 <div class="settings-item">
                     <label for="ws-ip">服务器地址:</label>
-                    <input type="text" id="ws-ip" placeholder="输入服务器地址(支持域名/IPv4/IPv6)">
+                    <input type="text" id="ws-ip" placeholder="输入服务器地址(支持域名/IPv4)">
                 </div>
                 <div class="settings-item">
                     <label for="ws-port">端口号: <span style="color: #666; font-size: 0.9em;">(可选)</span></label>
@@ -1615,7 +1615,15 @@
                 
                 // 如果没有指定端口，使用默认端口8081
                 const serverAddress = port ? `${ip}:${port}` : `${ip}:8081`;
-                const proxyUrl = `wss://ws.maliya.top?url=${encodeURIComponent(`ws://${serverAddress}`)}`;
+                
+                // 判断是否包含字母(域名)
+                const isDomain = /[a-zA-Z]/.test(ip);
+                
+                // 根据是否为域名选择不同的代理URL
+                const proxyUrl = isDomain 
+                    ? `wss://hws.maliya.top/proxy?url=${encodeURIComponent(`ws://${serverAddress}`)}`
+                    : `wss://ws.maliya.top?url=${encodeURIComponent(`ws://${serverAddress}`)}`;
+                    
                 wsConnection = new WebSocket(proxyUrl);
                 
                 const connectionTimeout = setTimeout(() => {
